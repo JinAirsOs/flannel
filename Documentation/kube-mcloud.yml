@@ -1,0 +1,229 @@
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: psp.mcloudcni.unprivileged
+  annotations:
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: docker/default
+    seccomp.security.alpha.kubernetes.io/defaultProfileName: docker/default
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
+    apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
+spec:
+  privileged: false
+  volumes:
+  - configMap
+  - secret
+  - emptyDir
+  - hostPath
+  allowedHostPaths:
+  - pathPrefix: "/etc/cni/net.d"
+  - pathPrefix: "/etc/kube-mcloudcni"
+  - pathPrefix: "/run/mcloudcni"
+  - pathPrefix: "/opt/cni/bin"
+  - pathPrefix: "/etc"
+  readOnlyRootFilesystem: false
+  # Users and groups
+  runAsUser:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  fsGroup:
+    rule: RunAsAny
+  # Privilege Escalation
+  allowPrivilegeEscalation: false
+  defaultAllowPrivilegeEscalation: false
+  # Capabilities
+  allowedCapabilities: ['NET_ADMIN', 'NET_RAW']
+  defaultAddCapabilities: []
+  requiredDropCapabilities: []
+  # Host namespaces
+  hostPID: false
+  hostIPC: false
+  hostNetwork: true
+  hostPorts:
+  - min: 0
+    max: 65535
+  # SELinux
+  seLinux:
+    # SELinux is unused in CaaSP
+    rule: 'RunAsAny'
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mcloudcni
+rules:
+- apiGroups: ['extensions']
+  resources: ['podsecuritypolicies']
+  verbs: ['use']
+  resourceNames: ['psp.mcloudcni.unprivileged']
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes/status
+  verbs:
+  - patch
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mcloudcni
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: mcloudcni
+subjects:
+- kind: ServiceAccount
+  name: mcloudcni
+  namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mcloudcni
+  namespace: kube-system
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: kube-mcloudcni-cfg
+  namespace: kube-system
+  labels:
+    tier: node
+    app: mcloudcni
+data:
+  cni-conf.json: |
+    {
+        "cniVersion": "0.2.0",
+        "name": "mynet",
+        "type": "bridge",
+        "bridge": "br0",
+        "isGateway": false,
+        "ipMasq": false,
+        "hairpinMode": true,
+        "ipam": {
+            "type": "hulk-ipam",
+            "token": "e463937d15576af58ae7a7040807c018",
+            "serverURL": "http://10.72.220.155:30888"
+        }
+    }
+  net-conf.json: |
+    {
+      "Network": "10.244.0.0/16",
+      "Backend": {
+        "Type": "host-gw"
+      }
+    }
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kube-mcloudcni-ds
+  namespace: kube-system
+  labels:
+    tier: node
+    app: mcloudcni
+spec:
+  selector:
+    matchLabels:
+      app: mcloudcni
+  template:
+    metadata:
+      labels:
+        tier: node
+        app: mcloudcni
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+      hostNetwork: true
+      priorityClassName: system-node-critical
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      serviceAccountName: mcloudcni
+      initContainers:
+      - name: install-cni-config
+        image: mcloud-registry.tencentcloudcr.com/mcloud/mcloudcni-init:v0.2.0
+        command:
+        - cp
+        args:
+        - -f
+        - /etc/kube-mcloudcni/cni-conf.json
+        - /etc/cni/net.d/10-hulknet.conf
+        volumeMounts:
+        - name: cni
+          mountPath: /etc/cni/net.d
+        - name: mcloudcni-cfg
+          mountPath: /etc/kube-mcloudcni/
+      - name: install-cni-bin
+        image: mcloud-registry.tencentcloudcr.com/mcloud/mcloudcni-init:v0.2.0
+        command: [ 'sh', '-c', 'mkdir -p /opt/cni/bin/tmp;cp /cni/* /opt/cni/bin/tmp;cp -f /opt/cni/bin/tmp/* /opt/cni/bin;rm -rf /opt/cni/bin/tmp' ]
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: cnibin
+          mountPath: /opt/cni/bin
+      containers:
+      - name: kube-mcloudcni
+        image: mcloud-registry.tencentcloudcr.com/mcloud/mcloudcni:v0.2.0
+        command:
+        - /opt/bin/netmaster
+        args:
+        - --kube-subnet-mgr
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "50Mi"
+          limits:
+            cpu: "100m"
+            memory: "50Mi"
+        securityContext:
+          privileged: false
+          capabilities:
+            add: ["NET_ADMIN", "NET_RAW"]
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        volumeMounts:
+        - name: run
+          mountPath: /run/mcloudcni
+        - name: mcloudcni-cfg
+          mountPath: /etc/kube-mcloudcni/
+      volumes:
+      - name: run
+        hostPath:
+          path: /run/mcloudcni
+      - name: cni
+        hostPath:
+          path: /etc/cni/net.d
+      - name: cnibin
+        hostPath:
+          path: /opt/cni/bin
+      - name: mcloudcni-cfg
+        configMap:
+          name: kube-mcloudcni-cfg
