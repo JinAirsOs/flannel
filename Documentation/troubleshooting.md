@@ -20,7 +20,7 @@ Flannel uses the `glog` library but only supports logging to stderr. The severit
     	when logging hits line file:N, emit a stack trace
 ```
 
-When running under systemd (e.g. on CoreOS Container Linux) the logs can be viewed with `journalctl -u flanneld`
+When running under systemd (e.g. on CoreOS Container Linux) the logs can be viewed with `journalctl -u netmaster`
 
 When flannel is running as a pod on Kubernetes, the logs can be viewed with `kubectl logs --namespace kube-system <POD_ID> -c kube-flannel`. You can find the pod IDs with `kubectl get po --namespace kube-system -l app=flannel`
 

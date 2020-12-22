@@ -1,15 +1,15 @@
 FROM alpine:3.12
 
-LABEL maintainer="Tom Denham <tom@tigera.io>"
+LABEL maintainer="Pan Zhendong <panzhendong02@meituan.com>"
 
-ENV FLANNEL_ARCH=amd64
+ENV NETMASTER_ARCH=amd64
 
 RUN apk add --no-cache iproute2 net-tools ca-certificates iptables strongswan && update-ca-certificates
 RUN apk add wireguard-tools --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/community
-COPY dist/flanneld-$FLANNEL_ARCH /opt/bin/flanneld
+COPY dist/netmaster-$NETMASTER_ARCH /opt/bin/netmaster
 COPY dist/mk-docker-opts.sh /opt/bin/
 COPY dist/iptables-wrapper-installer.sh /
 RUN /iptables-wrapper-installer.sh
 
-ENTRYPOINT ["/opt/bin/flanneld"]
+ENTRYPOINT ["/opt/bin/netmaster"]
 

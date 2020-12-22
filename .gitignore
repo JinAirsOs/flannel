@@ -1,5 +1,5 @@
 dist/*.tar.gz
-dist/flanneld*
+dist/netmaster*
 dist/*.docker
 dist/here.txt
 cover.out

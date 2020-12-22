@@ -56,11 +56,11 @@ $ etcd --advertise-client-urls http://$INTERNAL_IP:2379 --listen-client-urls htt
 - Publish configuration in etcd (ensure that the network range does not overlap with the one configured for the VPC)
 
 ```
-$ etcdctl set /coreos.com/network/config '{"Network":"10.24.0.0/16", "Backend": {"Type": "ali-vpc"}}'
+$ etcdctl set /mcloud.io/network/config '{"Network":"10.24.0.0/16", "Backend": {"Type": "ali-vpc"}}'
 ```
 - Fetch the latest release using wget from https://github.com/coreos/flannel/
 
-- make dist/flanneld
+- make dist/netmaster
 
 - export ENV
 
@@ -72,7 +72,7 @@ export ACCESS_KEY_SECRET=YOUR_ACCESS_KEY_SECRET
 - Run flannel daemon:
 
 ```
-sudo -E ./flanneld --etcd-endpoints=http://127.0.0.1:2379
+sudo -E ./netmaster --etcd-endpoints=http://127.0.0.1:2379
 ```
 
 Next, create and connect to a clone of `instance-1`.

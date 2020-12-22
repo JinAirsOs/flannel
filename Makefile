@@ -30,22 +30,22 @@ PACKAGES_EXPANDED=$(PACKAGES:%=github.com/coreos/flannel/%)
 
 ### BUILDING
 clean:
-	rm -f dist/flanneld*
+	rm -f dist/netmaster*
 	rm -f dist/*.aci
 	rm -f dist/*.docker
 	rm -f dist/*.tar.gz
 	rm -f dist/qemu-*
 
-dist/flanneld: $(shell find . -type f  -name '*.go')
-	go build -o dist/flanneld \
+dist/netmaster: $(shell find . -type f  -name '*.go')
+	go build -o dist/netmaster \
 	  -ldflags '-s -w -X github.com/coreos/flannel/version.Version=$(TAG) -extldflags "-static"'
 
-dist/flanneld.exe: $(shell find . -type f  -name '*.go')
-	CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc CGO_ENABLED=1 GOOS=windows go build -o dist/flanneld.exe \
+dist/netmaster.exe: $(shell find . -type f  -name '*.go')
+	CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc CGO_ENABLED=1 GOOS=windows go build -o dist/netmaster.exe \
 	  -ldflags '-s -w -X github.com/coreos/flannel/version.Version=$(TAG) -extldflags "-static"'
 
 # This will build flannel natively using golang image
-dist/flanneld-$(ARCH): dist/qemu-$(ARCH)-static
+dist/netmaster-$(ARCH): dist/qemu-$(ARCH)-static
 	# valid values for ARCH are [amd64 arm arm64 ppc64le s390x]
 	docker run -e CGO_ENABLED=$(CGO_ENABLED) -e GOARCH=$(ARCH) -e GOCACHE=/go \
 		-u $(shell id -u):$(shell id -g) \
@@ -54,14 +54,14 @@ dist/flanneld-$(ARCH): dist/qemu-$(ARCH)-static
 		-v $(CURDIR)/dist:/go/src/github.com/coreos/flannel/dist \
 		golang:$(GO_VERSION) /bin/bash -c '\
 		cd /go/src/github.com/coreos/flannel && \
-		make -e dist/flanneld && \
-		mv dist/flanneld dist/flanneld-$(ARCH)'
+		make -e dist/netmaster && \
+		mv dist/netmaster dist/netmaster-$(ARCH)'
 
 ## Create a docker image on disk for a specific arch and tag
-image:	dist/flanneld-$(TAG)-$(ARCH).docker
-dist/flanneld-$(TAG)-$(ARCH).docker: dist/flanneld-$(ARCH)
+image:	dist/netmaster-$(TAG)-$(ARCH).docker
+dist/netmaster-$(TAG)-$(ARCH).docker: dist/netmaster-$(ARCH)
 	docker build -f Dockerfile.$(ARCH) -t $(REGISTRY):$(TAG)-$(ARCH) .
-	docker save -o dist/flanneld-$(TAG)-$(ARCH).docker $(REGISTRY):$(TAG)-$(ARCH)
+	docker save -o dist/netmaster-$(TAG)-$(ARCH).docker $(REGISTRY):$(TAG)-$(ARCH)
 
 # amd64 gets an image with the suffix too (i.e. it's the default)
 ifeq ($(ARCH),amd64)
@@ -81,7 +81,7 @@ test: header-check gofmt verify-modules
 	# Run the functional tests
 	make e2e-test
 
-e2e-test: bash_unit dist/flanneld-e2e-$(TAG)-$(ARCH).docker
+e2e-test: bash_unit dist/netmaster-e2e-$(TAG)-$(ARCH).docker
 	$(MAKE) -C images/iperf3 ARCH=$(ARCH)
 	FLANNEL_DOCKER_IMAGE=$(REGISTRY):$(TAG)-$(ARCH) ./bash_unit dist/functional-test.sh
 	FLANNEL_DOCKER_IMAGE=$(REGISTRY):$(TAG)-$(ARCH) ./bash_unit dist/functional-test-k8s.sh
@@ -124,7 +124,7 @@ bash_unit:
 	chmod +x bash_unit
 
 # This will build flannel natively using golang image
-dist/flanneld-e2e-$(TAG)-$(ARCH).docker:
+dist/netmaster-e2e-$(TAG)-$(ARCH).docker:
 ifneq ($(ARCH),amd64)
 	$(MAKE) dist/qemu-$(ARCH)-static
 endif
@@ -135,20 +135,20 @@ endif
 		-v $(CURDIR)/dist:/go/src/github.com/coreos/flannel/dist \
 		golang:$(GO_VERSION) /bin/bash -c '\
 		cd /go/src/github.com/coreos/flannel && \
-		CGO_ENABLED=1 make -e dist/flanneld && \
-		mv dist/flanneld dist/flanneld-$(ARCH)'
+		CGO_ENABLED=1 make -e dist/netmaster && \
+		mv dist/netmaster dist/netmaster-$(ARCH)'
 	docker build -f Dockerfile.$(ARCH) -t $(REGISTRY):$(TAG)-$(ARCH) .
 
 # Make a release after creating a tag
 # To build cross platform Docker images, the qemu-static binaries are needed. On ubuntu "apt-get install  qemu-user-static"
 release: tar.gz dist/qemu-s390x-static dist/qemu-ppc64le-static dist/qemu-aarch64-static dist/qemu-arm-static #release-tests
-	ARCH=amd64 make dist/flanneld-$(TAG)-amd64.docker
-	ARCH=arm make dist/flanneld-$(TAG)-arm.docker
-	ARCH=arm64 make dist/flanneld-$(TAG)-arm64.docker
-	ARCH=ppc64le make dist/flanneld-$(TAG)-ppc64le.docker
-	ARCH=s390x make dist/flanneld-$(TAG)-s390x.docker
+	ARCH=amd64 make dist/netmaster-$(TAG)-amd64.docker
+	ARCH=arm make dist/netmaster-$(TAG)-arm.docker
+	ARCH=arm64 make dist/netmaster-$(TAG)-arm64.docker
+	ARCH=ppc64le make dist/netmaster-$(TAG)-ppc64le.docker
+	ARCH=s390x make dist/netmaster-$(TAG)-s390x.docker
 	@echo "Everything should be built for $(TAG)"
-	@echo "Add all flanneld-* and *.tar.gz files from dist/ to the Github release"
+	@echo "Add all netmaster-* and *.tar.gz files from dist/ to the Github release"
 	@echo "Use make docker-push-all to push the images to a registry"
 
 dist/qemu-%-static:
@@ -160,25 +160,25 @@ dist/qemu-%-static:
 		wget -O dist/$(@F) https://github.com/multiarch/qemu-user-static/releases/download/$(QEMU_VERSION)/$(@F); \
 	fi 
 
-## Build a .tar.gz for the amd64 ppc64le arm arm64 flanneld binary
+## Build a .tar.gz for the amd64 ppc64le arm arm64 netmaster binary
 tar.gz:
-	ARCH=amd64 make dist/flanneld-amd64
-	tar --transform='flags=r;s|-amd64||' -zcvf dist/flannel-$(TAG)-linux-amd64.tar.gz -C dist flanneld-amd64 mk-docker-opts.sh ../README.md
+	ARCH=amd64 make dist/netmaster-amd64
+	tar --transform='flags=r;s|-amd64||' -zcvf dist/flannel-$(TAG)-linux-amd64.tar.gz -C dist netmaster-amd64 mk-docker-opts.sh ../README.md
 	tar -tvf dist/flannel-$(TAG)-linux-amd64.tar.gz
-	ARCH=amd64 make dist/flanneld.exe
-	tar --transform='flags=r;s|-amd64||' -zcvf dist/flannel-$(TAG)-windows-amd64.tar.gz -C dist flanneld.exe mk-docker-opts.sh ../README.md
+	ARCH=amd64 make dist/netmaster.exe
+	tar --transform='flags=r;s|-amd64||' -zcvf dist/flannel-$(TAG)-windows-amd64.tar.gz -C dist netmaster.exe mk-docker-opts.sh ../README.md
 	tar -tvf dist/flannel-$(TAG)-windows-amd64.tar.gz
-	ARCH=ppc64le make dist/flanneld-ppc64le
-	tar --transform='flags=r;s|-ppc64le||' -zcvf dist/flannel-$(TAG)-linux-ppc64le.tar.gz -C dist flanneld-ppc64le mk-docker-opts.sh ../README.md
+	ARCH=ppc64le make dist/netmaster-ppc64le
+	tar --transform='flags=r;s|-ppc64le||' -zcvf dist/flannel-$(TAG)-linux-ppc64le.tar.gz -C dist netmaster-ppc64le mk-docker-opts.sh ../README.md
 	tar -tvf dist/flannel-$(TAG)-linux-ppc64le.tar.gz
-	ARCH=arm make dist/flanneld-arm
-	tar --transform='flags=r;s|-arm||' -zcvf dist/flannel-$(TAG)-linux-arm.tar.gz -C dist flanneld-arm mk-docker-opts.sh ../README.md
+	ARCH=arm make dist/netmaster-arm
+	tar --transform='flags=r;s|-arm||' -zcvf dist/flannel-$(TAG)-linux-arm.tar.gz -C dist netmaster-arm mk-docker-opts.sh ../README.md
 	tar -tvf dist/flannel-$(TAG)-linux-arm.tar.gz
-	ARCH=arm64 make dist/flanneld-arm64
-	tar --transform='flags=r;s|-arm64||' -zcvf dist/flannel-$(TAG)-linux-arm64.tar.gz -C dist flanneld-arm64 mk-docker-opts.sh ../README.md
+	ARCH=arm64 make dist/netmaster-arm64
+	tar --transform='flags=r;s|-arm64||' -zcvf dist/flannel-$(TAG)-linux-arm64.tar.gz -C dist netmaster-arm64 mk-docker-opts.sh ../README.md
 	tar -tvf dist/flannel-$(TAG)-linux-arm64.tar.gz
-	ARCH=s390x make dist/flanneld-s390x
-	tar --transform='flags=r;s|-s390x||' -zcvf dist/flannel-$(TAG)-linux-s390x.tar.gz -C dist flanneld-s390x mk-docker-opts.sh ../README.md
+	ARCH=s390x make dist/netmaster-s390x
+	tar --transform='flags=r;s|-s390x||' -zcvf dist/flannel-$(TAG)-linux-s390x.tar.gz -C dist netmaster-s390x mk-docker-opts.sh ../README.md
 	tar -tvf dist/flannel-$(TAG)-linux-s390x.tar.gz
 
 release-tests: release-etcd-tests release-k8s-tests
@@ -202,7 +202,7 @@ release-k8s-tests: bash_unit
 	# K8S_VERSION="1.4.12" ./bash_unit dist/functional-test-k8s.sh   #kube-flannel.yml is incompatible
 	# K8S_VERSION="1.3.10" ./bash_unit dist/functional-test-k8s.sh   #kube-flannel.yml is incompatible
 
-docker-push: dist/flanneld-$(TAG)-$(ARCH).docker
+docker-push: dist/netmaster-$(TAG)-$(ARCH).docker
 	docker push $(REGISTRY):$(TAG)-$(ARCH)
 
 docker-manifest-amend:
@@ -220,10 +220,10 @@ docker-push-all:
 	make docker-manifest-push
 
 flannel-git:
-	ARCH=amd64 REGISTRY=quay.io/coreos/flannel-git make clean dist/flanneld-$(TAG)-amd64.docker docker-push docker-manifest-amend
-	ARCH=arm REGISTRY=quay.io/coreos/flannel-git make clean dist/flanneld-$(TAG)-arm.docker docker-push docker-manifest-amend
-	ARCH=arm64 REGISTRY=quay.io/coreos/flannel-git make clean dist/flanneld-$(TAG)-arm64.docker docker-push docker-manifest-amend
-	ARCH=ppc64le REGISTRY=quay.io/coreos/flannel-git make clean dist/flanneld-$(TAG)-ppc64le.docker docker-push docker-manifest-amend
+	ARCH=amd64 REGISTRY=quay.io/coreos/flannel-git make clean dist/netmaster-$(TAG)-amd64.docker docker-push docker-manifest-amend
+	ARCH=arm REGISTRY=quay.io/coreos/flannel-git make clean dist/netmaster-$(TAG)-arm.docker docker-push docker-manifest-amend
+	ARCH=arm64 REGISTRY=quay.io/coreos/flannel-git make clean dist/netmaster-$(TAG)-arm64.docker docker-push docker-manifest-amend
+	ARCH=ppc64le REGISTRY=quay.io/coreos/flannel-git make clean dist/netmaster-$(TAG)-ppc64le.docker docker-push docker-manifest-amend
 	ARCH=s390x REGISTRY=quay.io/coreos/flannel-git make clean dist/flanneld-$(TAG)-s390x.docker docker-push docker-manifest-amend
 	REGISTRY=quay.io/coreos/flannel-git make docker-manifest-push
 

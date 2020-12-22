@@ -56,7 +56,7 @@ spec:
         image: flannel/minikube
         imagePullPolicy: Never
         command:
-        - /opt/bin/flanneld
+        - /opt/bin/netmaster
         args:
         - --ip-masq
         - --kube-subnet-mgr

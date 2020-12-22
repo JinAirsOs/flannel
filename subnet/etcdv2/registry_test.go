@@ -30,7 +30,7 @@ import (
 func newTestEtcdRegistry(t *testing.T) (Registry, *mockEtcd) {
 	cfg := &EtcdConfig{
 		Endpoints: []string{"http://127.0.0.1:4001", "http://127.0.0.1:2379"},
-		Prefix:    "/coreos.com/network",
+		Prefix:    "/mcloud.io/network",
 	}
 
 	r, err := newEtcdSubnetRegistry(cfg, func(c *EtcdConfig) (etcd.KeysAPI, error) {
@@ -101,7 +101,7 @@ func TestEtcdRegistry(t *testing.T) {
 	}
 
 	// Populate etcd with a network
-	netKey := "/coreos.com/network/config"
+	netKey := "/mcloud.io/network/config"
 	netValue := "{ \"Network\": \"10.1.0.0/16\", \"Backend\": { \"Type\": \"host-gw\" } }"
 	m.Create(ctx, netKey, netValue)
 
@@ -143,7 +143,7 @@ func TestEtcdRegistry(t *testing.T) {
 	}
 
 	// Make sure the lease got created
-	resp, err := m.Get(ctx, "/coreos.com/network/subnets/10.1.5.0-24", nil)
+	resp, err := m.Get(ctx, "/mcloud.io/network/subnets/10.1.5.0-24", nil)
 	if err != nil {
 		t.Fatalf("Failed to verify subnet lease directly in etcd: %v", err)
 	}
@@ -173,7 +173,7 @@ func TestEtcdRegistry(t *testing.T) {
 	}
 
 	// Make sure the lease got deleted
-	resp, err = m.Get(ctx, "/coreos.com/network/subnets/10.1.5.0-24", nil)
+	resp, err = m.Get(ctx, "/mcloud.io/network/subnets/10.1.5.0-24", nil)
 	if err == nil {
 		t.Fatal("Unexpected success getting deleted subnet")
 	}

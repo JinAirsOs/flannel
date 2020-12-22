@@ -120,7 +120,7 @@ spec:
       - name: kube-flannel
         image: quay.io/coreos/flannel:v0.11.0-amd64
         command:
-        - /opt/bin/flanneld
+        - /opt/bin/netmaster
         args:
         - --ip-masq
         - --kube-subnet-mgr
@@ -198,7 +198,7 @@ spec:
       - name: kube-flannel
         image: quay.io/coreos/flannel:v0.11.0-arm64
         command:
-        - /opt/bin/flanneld
+        - /opt/bin/netmaster
         args:
         - --ip-masq
         - --kube-subnet-mgr
@@ -276,7 +276,7 @@ spec:
       - name: kube-flannel
         image: quay.io/coreos/flannel:v0.11.0-arm
         command:
-        - /opt/bin/flanneld
+        - /opt/bin/netmaster
         args:
         - --ip-masq
         - --kube-subnet-mgr
@@ -354,7 +354,7 @@ spec:
       - name: kube-flannel
         image: quay.io/coreos/flannel:v0.11.0-ppc64le
         command:
-        - /opt/bin/flanneld
+        - /opt/bin/netmaster
         args:
         - --ip-masq
         - --kube-subnet-mgr
@@ -432,7 +432,7 @@ spec:
       - name: kube-flannel
         image: quay.io/coreos/flannel:v0.11.0-s390x
         command:
-        - /opt/bin/flanneld
+        - /opt/bin/netmaster
         args:
         - --ip-masq
         - --kube-subnet-mgr

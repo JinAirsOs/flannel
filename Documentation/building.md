@@ -4,13 +4,13 @@ The most reliable way to build flannel is by using Docker.
 
 ## Building in a Docker container
 
-To build flannel in a container run `make dist/flanneld-amd64`.
-You will now have a `flanneld-amd64` binary in the `dist` directory.
+To build flannel in a container run `make dist/netmaster-amd64`.
+You will now have a `netmaster-amd64` binary in the `dist` directory.
 
 ## Building for other platforms
 
 If you're not running `amd64` then you need to manually set `ARCH` before running `make`. For example, to produce a 
-`flanneld-s390x` binary and image, run
+`netmaster-s390x` binary and image, run
 * ARCH=s390x make image
 
 If you want to cross-compile for a different platform (e.g. you're running `amd64` but you want to produce `arm` binaries) then you need the qemu-static binaries to be present in `/usr/bin`. They can be installed on Ubuntu with
@@ -27,8 +27,8 @@ Then you should be able to set the ARCH as above
       To build the flannel.exe on windows, mingw-w64 is also needed. Run command `sudo apt-get install mingw-w64`
     * On Fedora/Redhat, run `sudo yum install kernel-headers golang gcc glibc-static`.
 2. Git clone the flannel repo. It MUST be placed in your GOPATH under `github.com/coreos/flannel`: `cd $GOPATH/src; git clone https://github.com/coreos/flannel.git`
-3. Run the build script, ensuring that `CGO_ENABLED=1`: `cd flannel; CGO_ENABLED=1 make dist/flanneld` for linux usage.
-   Run the build script, ensuring that `CGO_ENABLED=1`: `cd flannel; CGO_ENABLED=1 make dist/flanneld.exe` for windows usage.
+3. Run the build script, ensuring that `CGO_ENABLED=1`: `cd flannel; CGO_ENABLED=1 make dist/netmaster` for linux usage.
+   Run the build script, ensuring that `CGO_ENABLED=1`: `cd flannel; CGO_ENABLED=1 make dist/netmaster.exe` for windows usage.
 
 # Release Process
 

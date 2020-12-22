@@ -80,7 +80,7 @@ Type and options:
     * The route table must be in the same region as the EC2 instance that flannel is running on.
     * Flannel can automatically detect the ID of the route table if the optional `DescribeInstances` is granted to the EC2 instance.
 
-Authentication is handled via either environment variables or the node's IAM role. If the node has insufficient privileges to modify the VPC routing table specified, ensure that appropriate `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and optionally `AWS_SECURITY_TOKEN` environment variables are set when running the `flanneld` process.
+Authentication is handled via either environment variables or the node's IAM role. If the node has insufficient privileges to modify the VPC routing table specified, ensure that appropriate `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and optionally `AWS_SECURITY_TOKEN` environment variables are set when running the `netmaster` process.
 
 Route Limits: AWS [limits](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Appendix_Limits.html) the number of entries per route table to 50.
 

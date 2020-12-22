@@ -1,33 +1,33 @@
 # Running flannel
 
-Once you have pushed configuration JSON to `etcd`, you can start `flanneld`. If you published your config at the default location, you can start `flanneld` with no arguments.
+Once you have pushed configuration JSON to `etcd`, you can start `netmaster`. If you published your config at the default location, you can start `netmaster` with no arguments.
 
 Flannel will acquire a subnet lease, configure its routes based on other leases in the overlay network and start routing packets.
 
 It will also monitor `etcd` for new members of the network and adjust the routes accordingly.
 
-After flannel has acquired the subnet and configured backend, it will write out an environment variable file (`/run/flannel/subnet.env` by default) with subnet address and MTU that it supports.
+After flannel has acquired the subnet and configured backend, it will write out an environment variable file (`/run/mcloudcni/subnet.env` by default) with subnet address and MTU that it supports.
 
 For more information on checking the IP range for a specific host, see [Leases and Reservations][leases].
 
 ## Multiple networks
 
-Flanneld does not support running multiple networks from a single daemon (it did previously as an experimental feature).
+netmaster does not support running multiple networks from a single daemon (it did previously as an experimental feature).
 However, it does support running multiple daemons on the same host with different configurations. The `-subnet-file` and `-etcd-prefix` options should be used to "namespace" the different daemons.
 For example
 ```
-flanneld -subnet-file /vxlan.env -etcd-prefix=/vxlan/network
+netmaster -subnet-file /vxlan.env -etcd-prefix=/vxlan/network
 ```
 
 ## Running manually
 
 1. Download a `flannel` binary.
 ```bash
-wget https://github.com/coreos/flannel/releases/download/v0.10.0/flanneld-amd64 && chmod +x flanneld-amd64
+wget https://github.com/coreos/flannel/releases/download/v0.10.0/netmaster-amd64 && chmod +x netmaster-amd64
 ```
 2. Run the binary.
 ```bash
-sudo ./flanneld-amd64 # it will hang waiting to talk to etcd
+sudo ./netmaster-amd64 # it will hang waiting to talk to etcd
 ```
 3. Run `etcd`. Follow the instructions on the [CoreOS etcd page][coreos-etcd], or, if you have docker just do
 ```bash
@@ -35,12 +35,12 @@ docker run --rm --net=host quay.io/coreos/etcd
 ```
 4. Observe that `flannel` can now talk to `etcd`, but can't find any config. So write some config. Either get `etcdctl` from the [CoreOS etcd page][coreos-etcd], or use `docker` again.
 ```bash
-docker run --rm --net=host quay.io/coreos/etcd etcdctl set /coreos.com/network/config '{ "Network": "10.5.0.0/16", "Backend": {"Type": "vxlan"}}'
+docker run --rm --net=host quay.io/coreos/etcd etcdctl set /mcloud.io/network/config '{ "Network": "10.5.0.0/16", "Backend": {"Type": "vxlan"}}'
 ```
 Now `flannel` is running, it has created a VXLAN tunnel device on the host and written a subnet config file
 
 ```bash
-cat /run/flannel/subnet.env
+cat /run/mcloudcni/subnet.env
 FLANNEL_NETWORK=10.5.0.0/16
 FLANNEL_SUBNET=10.5.72.1/24
 FLANNEL_MTU=1450
@@ -52,7 +52,7 @@ The `FLANNEL_SUBNET` value is also only used if it is valid for the etcd network
 
 Subnet config value is `10.5.72.1/24`
 ```bash
-cat /run/flannel/subnet.env
+cat /run/mcloudcni/subnet.env
 FLANNEL_NETWORK=10.5.0.0/16
 FLANNEL_SUBNET=10.5.72.1/24
 FLANNEL_MTU=1450
@@ -60,7 +60,7 @@ FLANNEL_IPMASQ=false
 ```
 etcd network value is `10.6.0.0/16`. Since `10.5.72.1/24` is outside of this network, a new lease will be allocated.
 ```bash
-etcdctl get /coreos.com/network/config
+etcdctl get /mcloud.io/network/config
 { "Network": "10.6.0.0/16", "Backend": {"Type": "vxlan"}}
 ```
 
@@ -92,11 +92,11 @@ It also accepts `--mtu` to set the MTU for docker0 and veth devices that it will
 
 Because flannel writes out the acquired subnet and MTU values into a file, the script starting Docker can source in the values and pass them to Docker daemon:
 ```bash
-source /run/flannel/subnet.env
+source /run/mcloudcni/subnet.env
 docker daemon --bip=${FLANNEL_SUBNET} --mtu=${FLANNEL_MTU} &
 ```
 
-Systemd users can use `EnvironmentFile` directive in the `.service` file to pull in `/run/flannel/subnet.env`
+Systemd users can use `EnvironmentFile` directive in the `.service` file to pull in `/run/mcloudcni/subnet.env`
 
 ## CoreOS integration
 
@@ -115,9 +115,9 @@ If you're running on CoreOS, use `cloud-config` to set `coreos.flannel.interface
 
 ## Zero-downtime restarts
 
-When running with a backend other than `udp`, the kernel is providing the data path with `flanneld` acting as the control plane.
+When running with a backend other than `udp`, the kernel is providing the data path with `netmaster` acting as the control plane.
 
-As such, `flanneld` can be restarted (even to do an upgrade) without disturbing existing flows.
+As such, `netmaster` can be restarted (even to do an upgrade) without disturbing existing flows.
 
 However in the case of `vxlan` backend, this needs to be done within a few seconds as ARP entries can start to timeout requiring the flannel daemon to refresh them.
 
@@ -125,5 +125,5 @@ Also, to avoid interruptions during restart, the configuration must not be chang
 
 
 [coreos-etcd]: https://github.com/coreos/etcd/blob/master/Documentation/dev-guide/local_cluster.md
-[configuring-flannel]: https://coreos.com/docs/cluster-management/setup/flannel-config/
+[configuring-flannel]: https://mcloud.io/docs/cluster-management/setup/flannel-config/
 [leases]: reservations.md

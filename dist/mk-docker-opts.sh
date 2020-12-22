@@ -5,7 +5,7 @@ usage() {
 
 Generate Docker daemon options based on flannel env file
 OPTIONS:
-	-f	Path to flannel env file. Defaults to /run/flannel/subnet.env
+	-f	Path to flannel env file. Defaults to /run/mcloudcni/subnet.env
 	-d	Path to Docker env file to write to. Defaults to /run/docker_opts.env
 	-i	Output each Docker option as individual var. e.g. DOCKER_OPT_MTU=1500
 	-c	Output combined Docker options into DOCKER_OPTS var
@@ -16,7 +16,7 @@ OPTIONS:
 	exit 1
 }
 
-flannel_env="/run/flannel/subnet.env"
+flannel_env="/run/mcloudcni/subnet.env"
 docker_env="/run/docker_opts.env"
 combined_opts_key="DOCKER_OPTS"
 indiv_opts=false

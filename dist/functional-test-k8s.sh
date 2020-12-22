@@ -83,8 +83,8 @@ start_flannel() {
        docker run -e NODE_NAME=flannel$host_num --privileged --name flannel-e2e-test-flannel$host_num -id --entrypoint /bin/sh $FLANNEL_DOCKER_IMAGE >/dev/null
        docker exec flannel-e2e-test-flannel$host_num /bin/sh -c 'mkdir -p /etc/kube-flannel'
        echo $flannel_conf | docker exec -i flannel-e2e-test-flannel$host_num /bin/sh -c 'cat > /etc/kube-flannel/net-conf.json'
-       docker exec -d flannel-e2e-test-flannel$host_num /opt/bin/flanneld --kube-subnet-mgr --kube-api-url $k8s_endpt
-       while ! docker exec flannel-e2e-test-flannel$host_num ls /run/flannel/subnet.env >/dev/null 2>&1; do
+       docker exec -d flannel-e2e-test-flannel$host_num /opt/bin/netmaster --kube-subnet-mgr --kube-api-url $k8s_endpt
+       while ! docker exec flannel-e2e-test-flannel$host_num ls /run/mcloudcni/subnet.env >/dev/null 2>&1; do
          sleep 0.1
        done
     done
@@ -96,7 +96,7 @@ create_ping_dest() {
 
        # Use declare to allow the host_num variable to be part of the ping_dest variable name. -g is needed to make it global
        declare -g ping_dest$host_num=$(docker "exec" --privileged flannel-e2e-test-flannel$host_num /bin/sh -c '\
-		source /run/flannel/subnet.env && \
+		source /run/mcloudcni/subnet.env && \
 		ip link add name dummy0 type dummy && \
 		ip addr add $FLANNEL_SUBNET dev dummy0 && ip link set dummy0 up && \
 		echo $FLANNEL_SUBNET | cut -f 1 -d "/" ')
@@ -131,7 +131,7 @@ test_ipip() {
 
 test_public-ip-overwrite(){
   docker exec flannel-e2e-k8s-apiserver kubectl annotate node flannel1 \
-    flannel.alpha.coreos.com/public-ip-overwrite=172.18.0.2 >/dev/null 2>&1
+    flannel.alpha.mcloud.io/public-ip-overwrite=172.18.0.2 >/dev/null 2>&1
   start_flannel vxlan
   assert_equals "172.18.0.2" \
     "$(docker exec flannel-e2e-k8s-apiserver kubectl get node/flannel1 -o \
@@ -139,7 +139,7 @@ test_public-ip-overwrite(){
     "Overwriting public IP via annotation does not work"
   # Remove annotation to not break all other tests
   docker exec flannel-e2e-k8s-apiserver kubectl annotate node flannel1 \
-    flannel.alpha.coreos.com/public-ip-overwrite- >/dev/null 2>&1
+    flannel.alpha.mcloud.io/public-ip-overwrite- >/dev/null 2>&1
 }
 
 pings() {

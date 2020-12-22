@@ -8,10 +8,10 @@ an existing lease then it's used, otherwise one is assigned.
 Leases can be viewed by checking the contents of etcd. e.g.
 
 ```
-$ etcdctl ls /coreos.com/network/subnets            
-/coreos.com/network/subnets/10.5.34.0-24
-$ etcdctl -o extended get /coreos.com/network/subnets/10.5.34.0-24
-Key: /coreos.com/network/subnets/10.5.34.0-24
+$ etcdctl ls /mcloud.io/network/subnets            
+/mcloud.io/network/subnets/10.5.34.0-24
+$ etcdctl -o extended get /mcloud.io/network/subnets/10.5.34.0-24
+Key: /mcloud.io/network/subnets/10.5.34.0-24
 Created-Index: 5
 Modified-Index: 5
 TTL: 85925
@@ -25,9 +25,9 @@ This shows that there is a single lease (`10.5.34.0/24`) which will expire in 85
 The `"PublicIP"` value is how flannel knows to reuse this lease when restarted. 
 This means that if the public IP changes, then the flannel subnet will change too.
 
-In case a host is unable to renew its lease before the lease expires (e.g. a host takes a long time to restart and the timing lines up with when the lease would normally be renewed), flannel will then attempt to renew the last lease that it has saved in its subnet config file (which, unless specified, is located at `/var/run/flannel/subnet.env`)
+In case a host is unable to renew its lease before the lease expires (e.g. a host takes a long time to restart and the timing lines up with when the lease would normally be renewed), flannel will then attempt to renew the last lease that it has saved in its subnet config file (which, unless specified, is located at `/var/run/mcloudcni/subnet.env`)
 ```bash
-cat /var/run/flannel/subnet.env
+cat /var/run/mcloudcni/subnet.env
 FLANNEL_NETWORK=10.5.0.0/16
 FLANNEL_SUBNET=10.5.34.1/24
 FLANNEL_MTU=1450
@@ -44,5 +44,5 @@ The only difference between a lease and reservation is the etcd TTL value. Simpl
 removing the TTL from a lease will convert it to a reservation. e.g.
 
 ```
-etcdctl set -ttl 0 /coreos.com/network/subnets/10.5.1.0-24 $(etcdctl get /coreos.com/network/subnets/10.5.1.0-24)
+etcdctl set -ttl 0 /mcloud.io/network/subnets/10.5.1.0-24 $(etcdctl get /mcloud.io/network/subnets/10.5.1.0-24)
 ```

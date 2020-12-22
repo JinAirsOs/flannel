@@ -8,7 +8,7 @@ Flannel is a simple and easy way to configure a layer 3 network fabric designed 
 
 ## How it works
 
-Flannel runs a small, single binary agent called `flanneld` on each host, and is responsible for allocating a subnet lease to each host out of a larger, preconfigured address space.
+Flannel runs a small, single binary agent called `netmaster` on each host, and is responsible for allocating a subnet lease to each host out of a larger, preconfigured address space.
 Flannel uses either the Kubernetes API or [etcd][etcd] directly to store the network configuration, the allocated subnets, and any auxiliary data (such as the host's public IP).
 Packets are forwarded using one of several [backend mechanisms][backends] including VXLAN and various cloud integrations.
 
@@ -85,4 +85,4 @@ Flannel is under the Apache 2.0 license. See the [LICENSE][license] file for det
 [reporting]: Documentation/reporting_bugs.md
 [tectonic-installer]: https://github.com/coreos/tectonic-installer
 [installing-with-kubeadm]: https://kubernetes.io/docs/getting-started-guides/kubeadm/
-[tectonic]: https://coreos.com/tectonic/
+[tectonic]: https://mcloud.io/tectonic/

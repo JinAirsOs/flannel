@@ -189,7 +189,7 @@ func (be *IPIPBackend) configureIPIPDevice(lease *subnet.Lease) (*netlink.Iptun,
 		if err != nil {
 			return nil, fmt.Errorf("failed to set %v MTU to %d: %v", tunnelName, expectMTU, err)
 		}
-		// change MTU as it will be written into /run/flannel/subnet.env
+		// change MTU as it will be written into /run/mcloudcni/subnet.env
 		link.Attrs().MTU = expectMTU
 	}
 

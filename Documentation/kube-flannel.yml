@@ -18,7 +18,7 @@ spec:
   allowedHostPaths:
   - pathPrefix: "/etc/cni/net.d"
   - pathPrefix: "/etc/kube-flannel"
-  - pathPrefix: "/run/flannel"
+  - pathPrefix: "/run/mcloudcni"
   readOnlyRootFilesystem: false
   # Users and groups
   runAsUser:
@@ -182,7 +182,7 @@ spec:
       - name: kube-flannel
         image: quay.io/coreos/flannel:v0.13.1-rc1
         command:
-        - /opt/bin/flanneld
+        - /opt/bin/netmaster
         args:
         - --ip-masq
         - --kube-subnet-mgr
@@ -208,13 +208,13 @@ spec:
               fieldPath: metadata.namespace
         volumeMounts:
         - name: run
-          mountPath: /run/flannel
+          mountPath: /run/mcloudcni
         - name: flannel-cfg
           mountPath: /etc/kube-flannel/
       volumes:
       - name: run
         hostPath:
-          path: /run/flannel
+          path: /run/mcloudcni
       - name: cni
         hostPath:
           path: /etc/cni/net.d

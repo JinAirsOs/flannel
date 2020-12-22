@@ -45,7 +45,7 @@ setup() {
 
 teardown() {
     docker rm -f flannel-e2e-test-flannel1 flannel-e2e-test-flannel2 flannel-e2e-test-flannel1-iperf flannel-host1 flannel-host2 > /dev/null 2>&1
-    docker run --rm $ETCDCTL_IMG etcdctl --endpoints=$etcd_endpt rm /coreos.com/network/config > /dev/null 2>&1
+    docker run --rm $ETCDCTL_IMG etcdctl --endpoints=$etcd_endpt rm /mcloud.io/network/config > /dev/null 2>&1
 }
 
 write_config_etcd() {
@@ -57,7 +57,7 @@ write_config_etcd() {
         flannel_conf="{ \"Network\": \"$FLANNEL_NET\", \"Backend\": { \"Type\": \"${backend}\" } }"
     fi
 
-    while ! docker run --rm $ETCDCTL_IMG etcdctl --endpoints=$etcd_endpt set /coreos.com/network/config "$flannel_conf" >/dev/null
+    while ! docker run --rm $ETCDCTL_IMG etcdctl --endpoints=$etcd_endpt set /mcloud.io/network/config "$flannel_conf" >/dev/null
     do
         sleep 0.1
     done
@@ -66,13 +66,13 @@ write_config_etcd() {
 create_ping_dest() {
     # add a dummy interface with $FLANNEL_SUBNET so we have a known working IP to ping
     for host_num in 1 2; do
-       while ! docker exec flannel-e2e-test-flannel$host_num ls /run/flannel/subnet.env >/dev/null 2>&1; do
+       while ! docker exec flannel-e2e-test-flannel$host_num ls /run/mcloudcni/subnet.env >/dev/null 2>&1; do
          sleep 0.1
        done
 
        # Use declare to allow the host_num variable to be part of the ping_dest variable name. -g is needed to make it global
        declare -g ping_dest$host_num=$(docker "exec" --privileged flannel-e2e-test-flannel$host_num /bin/sh -c '\
-        source /run/flannel/subnet.env && \
+        source /run/mcloudcni/subnet.env && \
         ip link add name dummy0 type dummy && \
         ip addr add $FLANNEL_SUBNET dev dummy0 && ip link set dummy0 up && \
         echo $FLANNEL_SUBNET | cut -f 1 -d "/" ')
@@ -190,9 +190,9 @@ test_multi() {
         # Start the hosts
         docker run --name=flannel-host$host -id --privileged --entrypoint /bin/sh $FLANNEL_DOCKER_IMAGE   >/dev/null
 
-        # Start two flanneld instances
-        docker exec -d flannel-host$host sh -c "/opt/bin/flanneld -v 10 -subnet-file /vxlan.env -etcd-prefix=/vxlan/network --etcd-endpoints=$etcd_endpt 2>vxlan.log"
-        docker exec -d flannel-host$host sh -c "/opt/bin/flanneld -v 10 -subnet-file /hostgw.env -etcd-prefix=/hostgw/network --etcd-endpoints=$etcd_endpt 2>hostgw.log"
+        # Start two netmaster instances
+        docker exec -d flannel-host$host sh -c "/opt/bin/netmaster -v 10 -subnet-file /vxlan.env -etcd-prefix=/vxlan/network --etcd-endpoints=$etcd_endpt 2>vxlan.log"
+        docker exec -d flannel-host$host sh -c "/opt/bin/netmaster -v 10 -subnet-file /hostgw.env -etcd-prefix=/hostgw/network --etcd-endpoints=$etcd_endpt 2>hostgw.log"
     done
 
     for host in 1 2; do

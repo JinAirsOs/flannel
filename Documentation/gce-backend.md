@@ -44,14 +44,14 @@ $ etcd --advertise-client-urls http://$INTERNAL_IP:2379 --listen-client-urls htt
 - Publish configuration in etcd (ensure that the network range does not overlap with the one configured for the GCE network)
 
 ```
-$ etcdctl set /coreos.com/network/config '{"Network":"10.40.0.0/16", "Backend": {"Type": "gce"}}'
+$ etcdctl set /mcloud.io/network/config '{"Network":"10.40.0.0/16", "Backend": {"Type": "gce"}}'
 ```
 
 - Fetch the 0.8.0 release using wget from [here](https://github.com/coreos/flannel/releases/download/v0.8.0/flannel-v0.8.0-linux-amd64.tar.gz)
 - Run flannel daemon:
 
 ```
-$ sudo ./flanneld --etcd-endpoints=http://127.0.0.1:2379
+$ sudo ./netmaster --etcd-endpoints=http://127.0.0.1:2379
 ```
 
 Now make a clone of `demo-instance-1` and SSH into it to run the these steps:

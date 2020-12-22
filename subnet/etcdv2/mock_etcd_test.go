@@ -70,17 +70,17 @@ func watchMockEtcd(ctx context.Context, watcher etcd.Watcher, result chan error)
 	}
 
 	expected := []evt{
-		{"/coreos.com/network/foobar/config", "create", false},
-		{"/coreos.com/network/blah/config", "create", false},
-		{"/coreos.com/network/blah/config", "update", false},
-		{"/coreos.com/network/foobar/config", "delete", false},
-		{"/coreos.com/network/foobar", "delete", false},
+		{"/mcloud.io/network/foobar/config", "create", false},
+		{"/mcloud.io/network/blah/config", "create", false},
+		{"/mcloud.io/network/blah/config", "update", false},
+		{"/mcloud.io/network/foobar/config", "delete", false},
+		{"/mcloud.io/network/foobar", "delete", false},
 	}
 
-	// Wait for delete events on /coreos.com/network/foobar and its
+	// Wait for delete events on /mcloud.io/network/foobar and its
 	// 'config' child, and for the update event on
-	// /coreos.com/network/foobar (for 'config' delete) and on
-	// /coreos.com/network (for 'foobar' delete)
+	// /mcloud.io/network/foobar (for 'config' delete) and on
+	// /mcloud.io/network (for 'foobar' delete)
 	numEvents := 0
 	for {
 		resp, err := watcher.Next(ctx)
@@ -134,24 +134,24 @@ func TestMockEtcd(t *testing.T) {
 
 	// Create base test keys
 	sopts := &etcd.SetOptions{Dir: true}
-	r, err = m.Set(ctx, "/coreos.com/network", "", sopts)
+	r, err = m.Set(ctx, "/mcloud.io/network", "", sopts)
 	e = &etcd.Response{Action: "create", Index: 1002}
 	expectSuccess(t, r, err, e, "")
 
 	wopts := &etcd.WatcherOptions{AfterIndex: m.index, Recursive: true}
-	watcher := m.Watcher("/coreos.com/network", wopts)
+	watcher := m.Watcher("/mcloud.io/network", wopts)
 
 	result := make(chan error, 1)
 	go watchMockEtcd(ctx, watcher, result)
 
 	// Populate etcd with some keys
-	netKey1 := "/coreos.com/network/foobar/config"
+	netKey1 := "/mcloud.io/network/foobar/config"
 	netValue := "{ \"Network\": \"10.1.0.0/16\", \"Backend\": { \"Type\": \"host-gw\" } }"
 	r, err = m.Create(ctx, netKey1, netValue)
 	e = &etcd.Response{Action: "create", Index: 1004}
 	expectSuccess(t, r, err, e, netValue)
 
-	netKey2 := "/coreos.com/network/blah/config"
+	netKey2 := "/mcloud.io/network/blah/config"
 	netValue = "{ \"Network\": \"10.1.1.0/16\", \"Backend\": { \"Type\": \"host-gw\" } }"
 	r, err = m.Create(ctx, netKey2, netValue)
 	e = &etcd.Response{Action: "create", Index: 1006}
@@ -178,7 +178,7 @@ func TestMockEtcd(t *testing.T) {
 
 	// test directory listing
 	opts = &etcd.GetOptions{Recursive: true, Quorum: true}
-	r, err = m.Get(ctx, "/coreos.com/network/", opts)
+	r, err = m.Get(ctx, "/mcloud.io/network/", opts)
 	e = &etcd.Response{Action: "get", Index: 1007}
 	expectSuccess(t, r, err, e, "")
 
@@ -191,9 +191,9 @@ func TestMockEtcd(t *testing.T) {
 		if child.Dir != true {
 			t.Fatalf("Unexpected non-directory child %s", child.Key)
 		}
-		if child.Key == "/coreos.com/network/foobar" {
+		if child.Key == "/mcloud.io/network/foobar" {
 			node1Found = true
-		} else if child.Key == "/coreos.com/network/blah" {
+		} else if child.Key == "/mcloud.io/network/blah" {
 			node2Found = true
 		} else {
 			t.Fatalf("Unexpected child %s found", child.Key)
@@ -208,14 +208,14 @@ func TestMockEtcd(t *testing.T) {
 
 	// Delete a key
 	dopts := &etcd.DeleteOptions{Recursive: true, Dir: false}
-	r, err = m.Delete(ctx, "/coreos.com/network/foobar", dopts)
+	r, err = m.Delete(ctx, "/mcloud.io/network/foobar", dopts)
 	if err == nil {
 		t.Fatalf("Unexpected success deleting a directory")
 	}
 
 	// Delete a key
 	dopts = &etcd.DeleteOptions{Recursive: true, Dir: true}
-	r, err = m.Delete(ctx, "/coreos.com/network/foobar", dopts)
+	r, err = m.Delete(ctx, "/mcloud.io/network/foobar", dopts)
 	e = &etcd.Response{Action: "delete", Index: 1010}
 	expectSuccess(t, r, err, e, "")
 

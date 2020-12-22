@@ -3,7 +3,7 @@
 If the --kube-subnet-mgr argument is true, flannel reads its configuration from `/etc/kube-flannel/net-conf.json`.
 
 If the --kube-subnet-mgr argument is false, flannel reads its configuration from etcd.
-By default, it will read the configuration from `/coreos.com/network/config` (which can be overridden using `--etcd-prefix`).
+By default, it will read the configuration from `/mcloud.io/network/config` (which can be overridden using `--etcd-prefix`).
 
 Use the `etcdctl` utility to set values in etcd.
 
@@ -49,7 +49,7 @@ The following configuration illustrates the use of most options with `udp` backe
 ```bash
 --public-ip="": IP accessible by other nodes for inter-host communication. Defaults to the IP of the interface being used for communication.
 --etcd-endpoints=http://127.0.0.1:4001: a comma-delimited list of etcd endpoints.
---etcd-prefix=/coreos.com/network: etcd prefix.
+--etcd-prefix=/mcloud.io/network: etcd prefix.
 --etcd-keyfile="": SSL key file used to secure etcd communication.
 --etcd-certfile="": SSL certification file used to secure etcd communication.
 --etcd-cafile="": SSL Certificate Authority file used to secure etcd communication.
@@ -57,8 +57,8 @@ The following configuration illustrates the use of most options with `udp` backe
 --iface="": interface to use (IP or name) for inter-host communication. Defaults to the interface for the default route on the machine. This can be specified multiple times to check each option in order. Returns the first match found.
 --iface-regex="": regex expression to match the first interface to use (IP or name) for inter-host communication. If unspecified, will default to the interface for the default route on the machine. This can be specified multiple times to check each regex in order. Returns the first match found. This option is superseded by the iface option and will only be used if nothing matches any option specified in the iface options.
 --iptables-resync=5: resync period for iptables rules, in seconds. Defaults to 5 seconds, if you see a large amount of contention for the iptables lock increasing this will probably help.
---subnet-file=/run/flannel/subnet.env: filename where env variables (subnet and MTU values) will be written to.
---net-config-path=/etc/kube-flannel/net-conf.json: path to the network configuration file to use
+--subnet-file=/run/mcloudcni/subnet.env: filename where env variables (subnet and MTU values) will be written to.
+--net-config-path=/etc/kube-mcloudcni/net-conf.json: path to the network configuration file to use
 --subnet-lease-renew-margin=60: subnet lease renewal margin, in minutes.
 --ip-masq=false: setup IP masquerade for traffic destined for outside the flannel network. Flannel assumes that the default policy is ACCEPT in the NAT POSTROUTING chain.
 -v=0: log level for V logs. Set to 1 to see messages related to data path.
@@ -72,8 +72,8 @@ MTU is calculated and set automatically by flannel. It then reports that value i
 ## Environment variables
 
 The command line options outlined above can also be specified via environment variables.
-For example `--etcd-endpoints=http://10.0.0.2:2379` is equivalent to `FLANNELD_ETCD_ENDPOINTS=http://10.0.0.2:2379` environment variable.
-Any command line option can be turned into an environment variable by prefixing it with `FLANNELD_`, stripping leading dashes, converting to uppercase and replacing all other dashes to underscores.
+For example `--etcd-endpoints=http://10.0.0.2:2379` is equivalent to `netmaster_ETCD_ENDPOINTS=http://10.0.0.2:2379` environment variable.
+Any command line option can be turned into an environment variable by prefixing it with `netmaster_`, stripping leading dashes, converting to uppercase and replacing all other dashes to underscores.
 
 ## Health Check
 

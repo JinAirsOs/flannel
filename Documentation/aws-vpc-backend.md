@@ -118,13 +118,13 @@ $ etcd --advertise-client-urls http://$INTERNAL_IP:2379 --listen-client-urls htt
   attempt to automatically determine your route table.
 
 ```
-$ etcdctl set /coreos.com/network/config '{"Network":"10.20.0.0/16", "Backend": {"Type": "aws-vpc"}}'
+$ etcdctl set /mcloud.io/network/config '{"Network":"10.20.0.0/16", "Backend": {"Type": "aws-vpc"}}'
 ```
 
 - If you want to manually specify your route table ID or if you want to update multiple route tables, e.g. for a deployment across multiple availability zones, use either a string for one or an array for one or more route tables like this.
 
 ```
-$ etcdctl set /coreos.com/network/config '{"Network":"10.20.0.0/16", "Backend": {"Type": "aws-vpc", "RouteTableID": ["rtb-abc00001","rtb-abc00002","rtb-abc00003"]} }'}}'
+$ etcdctl set /mcloud.io/network/config '{"Network":"10.20.0.0/16", "Backend": {"Type": "aws-vpc", "RouteTableID": ["rtb-abc00001","rtb-abc00002","rtb-abc00003"]} }'}}'
 ```
 
 
@@ -132,7 +132,7 @@ $ etcdctl set /coreos.com/network/config '{"Network":"10.20.0.0/16", "Backend": 
 - Run flannel daemon:
 
 ```
-sudo ./flanneld --etcd-endpoints=http://127.0.0.1:2379
+sudo ./netmaster --etcd-endpoints=http://127.0.0.1:2379
 ```
 
 Next, create and connect to a clone of `demo-instance-1`.

@@ -61,7 +61,7 @@ $ etcd --advertise-client-urls http://$INTERNAL_IP:2379 --listen-client-urls htt
 - 把配置写入到 ETCD 中（注意网络范围不要与VPC的网络有重叠）。
 
 ```
-$ etcdctl set /coreos.com/network/config '{"Network":"10.24.0.0/16", "Backend": {"Type": "ali-vpc"}}'
+$ etcdctl set /mcloud.io/network/config '{"Network":"10.24.0.0/16", "Backend": {"Type": "ali-vpc"}}'
 ```
 - 从 https://github.com/coreos/flannel/ 上拉取最新的分支
 - 编译项目
@@ -75,7 +75,7 @@ export ACCESS_KEY_SECRET=YOUR_ACCESS_KEY_SECRET
 - 运行 flannel :
 
 ```
-sudo -E ./flanneld --etcd-endpoints=http://127.0.0.1:2379
+sudo -E ./netmaster --etcd-endpoints=http://127.0.0.1:2379
 ```
 
 然后创建一个同样的实例并且连接。
