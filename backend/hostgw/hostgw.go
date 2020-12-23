@@ -60,12 +60,12 @@ func (be *HostgwBackend) RegisterNetwork(ctx context.Context, wg *sync.WaitGroup
 		Mtu:         be.extIface.Iface.MTU,
 		LinkIndex:   be.extIface.Iface.Index,
 	}
-	n.GetRoute = func(lease *subnet.Lease) *netlink.Route {
-		return &netlink.Route{
+	n.GetRoute = func(lease *subnet.Lease) []*netlink.Route {
+		return []*netlink.Route{{
 			Dst:       lease.Subnet.ToIPNet(),
 			Gw:        lease.Attrs.PublicIP.ToIP(),
 			LinkIndex: n.LinkIndex,
-		}
+		}}
 	}
 
 	attrs := subnet.LeaseAttrs{

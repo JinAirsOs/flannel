@@ -78,12 +78,12 @@ func (be *HostgwBackend) RegisterNetwork(ctx context.Context, wg *sync.WaitGroup
 		Mtu:         be.extIface.Iface.MTU,
 		LinkIndex:   be.extIface.Iface.Index,
 	}
-	n.GetRoute = func(lease *subnet.Lease) *routing.Route {
-		return &routing.Route{
+	n.GetRoute = func(lease *subnet.Lease) []*routing.Route {
+		return []*routing.Route{&routing.Route{
 			DestinationSubnet: lease.Subnet.ToIPNet(),
 			GatewayAddress:    lease.Attrs.PublicIP.ToIP(),
 			InterfaceIndex:    n.LinkIndex,
-		}
+		}}
 	}
 
 	// 2. Acquire the lease form subnet manager

@@ -124,7 +124,9 @@ data:
     {
       "Network": "10.244.0.0/16",
       "Backend": {
-        "Type": "host-gw"
+        "Type": "mcloud",
+        "token": "e463937d15576af58ae7a7040807c018",
+        "serverURL": "http://10.72.220.155:30888"
       }
     }
 ---

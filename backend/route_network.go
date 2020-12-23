@@ -38,7 +38,7 @@ type RouteNetwork struct {
 	BackendType string
 	routes      []netlink.Route
 	SM          subnet.Manager
-	GetRoute    func(lease *subnet.Lease) *netlink.Route
+	GetRoute    func(lease *subnet.Lease) []*netlink.Route
 	Mtu         int
 	LinkIndex   int
 }
@@ -88,32 +88,34 @@ func (n *RouteNetwork) handleSubnetEvents(batch []subnet.Event) {
 				log.Warningf("Ignoring non-%v subnet: type=%v", n.BackendType, evt.Lease.Attrs.BackendType)
 				continue
 			}
-			route := n.GetRoute(&evt.Lease)
+			routes := n.GetRoute(&evt.Lease)
+			for _, route := range routes {
+				n.addToRouteList(*route)
+				// Check if route exists before attempting to add it
+				routeList, err := netlink.RouteListFiltered(netlink.FAMILY_V4, &netlink.Route{Dst: route.Dst}, netlink.RT_FILTER_DST)
+				if err != nil {
+					log.Warningf("Unable to list routes: %v", err)
+				}
 
-			n.addToRouteList(*route)
-			// Check if route exists before attempting to add it
-			routeList, err := netlink.RouteListFiltered(netlink.FAMILY_V4, &netlink.Route{Dst: route.Dst}, netlink.RT_FILTER_DST)
-			if err != nil {
-				log.Warningf("Unable to list routes: %v", err)
-			}
+				if len(routeList) > 0 && !routeEqual(routeList[0], *route) {
+					// Same Dst different Gw or different link index. Remove it, correct route will be added below.
+					log.Warningf("Replacing existing route to %v via %v dev index %d with %v via %v dev index %d.", evt.Lease.Subnet, routeList[0].Gw, routeList[0].LinkIndex, evt.Lease.Subnet, evt.Lease.Attrs.PublicIP, route.LinkIndex)
+					if err := netlink.RouteDel(&routeList[0]); err != nil {
+						log.Errorf("Error deleting route to %v: %v", evt.Lease.Subnet, err)
+						continue
+					}
+					n.removeFromRouteList(routeList[0])
+				}
 
-			if len(routeList) > 0 && !routeEqual(routeList[0], *route) {
-				// Same Dst different Gw or different link index. Remove it, correct route will be added below.
-				log.Warningf("Replacing existing route to %v via %v dev index %d with %v via %v dev index %d.", evt.Lease.Subnet, routeList[0].Gw, routeList[0].LinkIndex, evt.Lease.Subnet, evt.Lease.Attrs.PublicIP, route.LinkIndex)
-				if err := netlink.RouteDel(&routeList[0]); err != nil {
-					log.Errorf("Error deleting route to %v: %v", evt.Lease.Subnet, err)
+				if len(routeList) > 0 && routeEqual(routeList[0], *route) {
+					// Same Dst and same Gw, keep it and do not attempt to add it.
+					log.Infof("Route to %v via %v dev index %d already exists, skipping.", evt.Lease.Subnet, evt.Lease.Attrs.PublicIP, routeList[0].LinkIndex)
+				} else if err := netlink.RouteAdd(route); err != nil {
+					log.Errorf("Error adding route to %v via %v dev index %d: %v", evt.Lease.Subnet, evt.Lease.Attrs.PublicIP, route.LinkIndex, err)
 					continue
 				}
-				n.removeFromRouteList(routeList[0])
 			}
 
-			if len(routeList) > 0 && routeEqual(routeList[0], *route) {
-				// Same Dst and same Gw, keep it and do not attempt to add it.
-				log.Infof("Route to %v via %v dev index %d already exists, skipping.", evt.Lease.Subnet, evt.Lease.Attrs.PublicIP, routeList[0].LinkIndex)
-			} else if err := netlink.RouteAdd(route); err != nil {
-				log.Errorf("Error adding route to %v via %v dev index %d: %v", evt.Lease.Subnet, evt.Lease.Attrs.PublicIP, route.LinkIndex, err)
-				continue
-			}
 
 		case subnet.EventRemoved:
 			log.Info("Subnet removed: ", evt.Lease.Subnet)
@@ -123,13 +125,15 @@ func (n *RouteNetwork) handleSubnetEvents(batch []subnet.Event) {
 				continue
 			}
 
-			route := n.GetRoute(&evt.Lease)
+			routes := n.GetRoute(&evt.Lease)
 			// Always remove the route from the route list.
-			n.removeFromRouteList(*route)
+			for _, route := range routes {
+				n.removeFromRouteList(*route)
 
-			if err := netlink.RouteDel(route); err != nil {
-				log.Errorf("Error deleting route to %v: %v", evt.Lease.Subnet, err)
-				continue
+				if err := netlink.RouteDel(route); err != nil {
+					log.Errorf("Error deleting route to %v: %v", evt.Lease.Subnet, err)
+					continue
+				}
 			}
 
 		default:

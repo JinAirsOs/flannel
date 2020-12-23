@@ -97,7 +97,7 @@ func (be *IPIPBackend) RegisterNetwork(ctx context.Context, wg *sync.WaitGroup, 
 
 	n.Mtu = link.MTU
 	n.LinkIndex = link.Index
-	n.GetRoute = func(lease *subnet.Lease) *netlink.Route {
+	n.GetRoute = func(lease *subnet.Lease) []*netlink.Route {
 		route := netlink.Route{
 			Dst:       lease.Subnet.ToIPNet(),
 			Gw:        lease.Attrs.PublicIP.ToIP(),
@@ -118,7 +118,7 @@ func (be *IPIPBackend) RegisterNetwork(ctx context.Context, wg *sync.WaitGroup, 
 			}
 		}
 
-		return &route
+		return []*netlink.Route{&route}
 	}
 
 	return n, nil
