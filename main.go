@@ -57,6 +57,7 @@ import (
 	_ "github.com/coreos/flannel/backend/ipsec"
 	_ "github.com/coreos/flannel/backend/udp"
 	_ "github.com/coreos/flannel/backend/vxlan"
+	_ "github.com/coreos/flannel/backend/mcloud"
 	"github.com/coreos/go-systemd/daemon"
 )
 
@@ -105,33 +106,33 @@ var (
 	opts           CmdLineOpts
 	errInterrupted = errors.New("interrupted")
 	errCanceled    = errors.New("canceled")
-	flannelFlags   = flag.NewFlagSet("flannel", flag.ExitOnError)
+	netmasterFlags   = flag.NewFlagSet("flannel", flag.ExitOnError)
 )
 
 func init() {
-	flannelFlags.StringVar(&opts.etcdEndpoints, "etcd-endpoints", "http://127.0.0.1:4001,http://127.0.0.1:2379", "a comma-delimited list of etcd endpoints")
-	flannelFlags.StringVar(&opts.etcdPrefix, "etcd-prefix", "/mcloud.io/network", "etcd prefix")
-	flannelFlags.StringVar(&opts.etcdKeyfile, "etcd-keyfile", "", "SSL key file used to secure etcd communication")
-	flannelFlags.StringVar(&opts.etcdCertfile, "etcd-certfile", "", "SSL certification file used to secure etcd communication")
-	flannelFlags.StringVar(&opts.etcdCAFile, "etcd-cafile", "", "SSL Certificate Authority file used to secure etcd communication")
-	flannelFlags.StringVar(&opts.etcdUsername, "etcd-username", "", "username for BasicAuth to etcd")
-	flannelFlags.StringVar(&opts.etcdPassword, "etcd-password", "", "password for BasicAuth to etcd")
-	flannelFlags.Var(&opts.iface, "iface", "interface to use (IP or name) for inter-host communication. Can be specified multiple times to check each option in order. Returns the first match found.")
-	flannelFlags.Var(&opts.ifaceRegex, "iface-regex", "regex expression to match the first interface to use (IP or name) for inter-host communication. Can be specified multiple times to check each regex in order. Returns the first match found. Regexes are checked after specific interfaces specified by the iface option have already been checked.")
-	flannelFlags.StringVar(&opts.subnetFile, "subnet-file", "/run/mcloudcni/subnet.env", "filename where env variables (subnet, MTU, ... ) will be written to")
-	flannelFlags.StringVar(&opts.publicIP, "public-ip", "", "IP accessible by other nodes for inter-host communication")
-	flannelFlags.IntVar(&opts.subnetLeaseRenewMargin, "subnet-lease-renew-margin", 60, "subnet lease renewal margin, in minutes, ranging from 1 to 1439")
-	flannelFlags.BoolVar(&opts.ipMasq, "ip-masq", false, "setup IP masquerade rule for traffic destined outside of overlay network")
-	flannelFlags.BoolVar(&opts.kubeSubnetMgr, "kube-subnet-mgr", false, "contact the Kubernetes API for subnet assignment instead of etcd.")
-	flannelFlags.StringVar(&opts.kubeApiUrl, "kube-api-url", "", "Kubernetes API server URL. Does not need to be specified if flannel is running in a pod.")
-	flannelFlags.StringVar(&opts.kubeAnnotationPrefix, "kube-annotation-prefix", "flannel.alpha.mcloud.io", `Kubernetes annotation prefix. Can contain single slash "/", otherwise it will be appended at the end.`)
-	flannelFlags.StringVar(&opts.kubeConfigFile, "kubeconfig-file", "", "kubeconfig file location. Does not need to be specified if flannel is running in a pod.")
-	flannelFlags.BoolVar(&opts.version, "version", false, "print version and exit")
-	flannelFlags.StringVar(&opts.healthzIP, "healthz-ip", "0.0.0.0", "the IP address for healthz server to listen")
-	flannelFlags.IntVar(&opts.healthzPort, "healthz-port", 0, "the port for healthz server to listen(0 to disable)")
-	flannelFlags.IntVar(&opts.iptablesResyncSeconds, "iptables-resync", 5, "resync period for iptables rules, in seconds")
-	flannelFlags.BoolVar(&opts.iptablesForwardRules, "iptables-forward-rules", true, "add default accept rules to FORWARD chain in iptables")
-	flannelFlags.StringVar(&opts.netConfPath, "net-config-path", "/etc/kube-mcloudcni/net-conf.json", "path to the network configuration file")
+	netmasterFlags.StringVar(&opts.etcdEndpoints, "etcd-endpoints", "http://127.0.0.1:4001,http://127.0.0.1:2379", "a comma-delimited list of etcd endpoints")
+	netmasterFlags.StringVar(&opts.etcdPrefix, "etcd-prefix", "/mcloud.io/network", "etcd prefix")
+	netmasterFlags.StringVar(&opts.etcdKeyfile, "etcd-keyfile", "", "SSL key file used to secure etcd communication")
+	netmasterFlags.StringVar(&opts.etcdCertfile, "etcd-certfile", "", "SSL certification file used to secure etcd communication")
+	netmasterFlags.StringVar(&opts.etcdCAFile, "etcd-cafile", "", "SSL Certificate Authority file used to secure etcd communication")
+	netmasterFlags.StringVar(&opts.etcdUsername, "etcd-username", "", "username for BasicAuth to etcd")
+	netmasterFlags.StringVar(&opts.etcdPassword, "etcd-password", "", "password for BasicAuth to etcd")
+	netmasterFlags.Var(&opts.iface, "iface", "interface to use (IP or name) for inter-host communication. Can be specified multiple times to check each option in order. Returns the first match found.")
+	netmasterFlags.Var(&opts.ifaceRegex, "iface-regex", "regex expression to match the first interface to use (IP or name) for inter-host communication. Can be specified multiple times to check each regex in order. Returns the first match found. Regexes are checked after specific interfaces specified by the iface option have already been checked.")
+	netmasterFlags.StringVar(&opts.subnetFile, "subnet-file", "/run/mcloudcni/subnet.env", "filename where env variables (subnet, MTU, ... ) will be written to")
+	netmasterFlags.StringVar(&opts.publicIP, "public-ip", "", "IP accessible by other nodes for inter-host communication")
+	netmasterFlags.IntVar(&opts.subnetLeaseRenewMargin, "subnet-lease-renew-margin", 60, "subnet lease renewal margin, in minutes, ranging from 1 to 1439")
+	netmasterFlags.BoolVar(&opts.ipMasq, "ip-masq", false, "setup IP masquerade rule for traffic destined outside of overlay network")
+	netmasterFlags.BoolVar(&opts.kubeSubnetMgr, "kube-subnet-mgr", false, "contact the Kubernetes API for subnet assignment instead of etcd.")
+	netmasterFlags.StringVar(&opts.kubeApiUrl, "kube-api-url", "", "Kubernetes API server URL. Does not need to be specified if flannel is running in a pod.")
+	netmasterFlags.StringVar(&opts.kubeAnnotationPrefix, "kube-annotation-prefix", "netmaster.alpha.mcloud.io", `Kubernetes annotation prefix. Can contain single slash "/", otherwise it will be appended at the end.`)
+	netmasterFlags.StringVar(&opts.kubeConfigFile, "kubeconfig-file", "", "kubeconfig file location. Does not need to be specified if flannel is running in a pod.")
+	netmasterFlags.BoolVar(&opts.version, "version", false, "print version and exit")
+	netmasterFlags.StringVar(&opts.healthzIP, "healthz-ip", "0.0.0.0", "the IP address for healthz server to listen")
+	netmasterFlags.IntVar(&opts.healthzPort, "healthz-port", 0, "the port for healthz server to listen(0 to disable)")
+	netmasterFlags.IntVar(&opts.iptablesResyncSeconds, "iptables-resync", 5, "resync period for iptables rules, in seconds")
+	netmasterFlags.BoolVar(&opts.iptablesForwardRules, "iptables-forward-rules", true, "add default accept rules to FORWARD chain in iptables")
+	netmasterFlags.StringVar(&opts.netConfPath, "net-config-path", "/etc/kube-mcloudcni/net-conf.json", "path to the network configuration file")
 
 	// glog will log to tmp files by default. override so all entries
 	// can flow into journald (if running under systemd)
@@ -143,19 +144,19 @@ func init() {
 	copyFlag("log_backtrace_at")
 
 	// Define the usage function
-	flannelFlags.Usage = usage
+	netmasterFlags.Usage = usage
 
 	// now parse command line args
-	flannelFlags.Parse(os.Args[1:])
+	netmasterFlags.Parse(os.Args[1:])
 }
 
 func copyFlag(name string) {
-	flannelFlags.Var(flag.Lookup(name).Value, flag.Lookup(name).Name, flag.Lookup(name).Usage)
+	netmasterFlags.Var(flag.Lookup(name).Value, flag.Lookup(name).Name, flag.Lookup(name).Usage)
 }
 
 func usage() {
 	fmt.Fprintf(os.Stderr, "Usage: %s [OPTION]...\n", os.Args[0])
-	flannelFlags.PrintDefaults()
+	netmasterFlags.PrintDefaults()
 	os.Exit(0)
 }
 
@@ -186,7 +187,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	flagutil.SetFlagsFromEnv(flannelFlags, "netmaster")
+	flagutil.SetFlagsFromEnv(netmasterFlags, "netmaster")
 
 	// Validate flags
 	if opts.subnetLeaseRenewMargin >= 24*60 || opts.subnetLeaseRenewMargin <= 0 {

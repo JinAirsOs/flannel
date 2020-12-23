@@ -337,8 +337,8 @@ func (ksm *kubeSubnetManager) setNodeNetworkUnavailableFalse(ctx context.Context
 	condition := v1.NodeCondition{
 		Type:               v1.NodeNetworkUnavailable,
 		Status:             v1.ConditionFalse,
-		Reason:             "FlannelIsUp",
-		Message:            "Flannel is running on this node",
+		Reason:             "NetmasterIsUp",
+		Message:            "Netmaster is running on this node",
 		LastTransitionTime: metav1.Now(),
 		LastHeartbeatTime:  metav1.Now(),
 	}
