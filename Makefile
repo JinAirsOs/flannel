@@ -1,7 +1,7 @@
 .PHONY: test e2e-test cover gofmt gofmt-fix header-check clean tar.gz docker-push release docker-push-all flannel-git docker-manifest-amend docker-manifest-push
 
 # Registry used for publishing images
-REGISTRY?=quay.io/coreos/flannel
+REGISTRY?=mcloud-registry.tencentcloudcr.com/mcloud/netmaster
 QEMU_VERSION=v3.0.0
 
 # Default tag and architecture. Can be overridden
@@ -45,7 +45,7 @@ dist/netmaster.exe: $(shell find . -type f  -name '*.go')
 	  -ldflags '-s -w -X github.com/coreos/flannel/version.Version=$(TAG) -extldflags "-static"'
 
 # This will build flannel natively using golang image
-dist/netmaster-$(ARCH): dist/qemu-$(ARCH)-static
+dist/netmaster-$(ARCH):
 	# valid values for ARCH are [amd64 arm arm64 ppc64le s390x]
 	docker run -e CGO_ENABLED=$(CGO_ENABLED) -e GOARCH=$(ARCH) -e GOCACHE=/go \
 		-u $(shell id -u):$(shell id -g) \
