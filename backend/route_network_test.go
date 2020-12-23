@@ -46,12 +46,12 @@ func TestRouteCache(t *testing.T) {
 		BackendType: "host-gw",
 		LinkIndex:   lo.Attrs().Index,
 	}
-	nw.GetRoute = func(lease *subnet.Lease) *netlink.Route {
-		return &netlink.Route{
+	nw.GetRoute = func(lease *subnet.Lease) []*netlink.Route {
+		return []*netlink.Route{&netlink.Route{
 			Dst:       lease.Subnet.ToIPNet(),
 			Gw:        lease.Attrs.PublicIP.ToIP(),
 			LinkIndex: nw.LinkIndex,
-		}
+		}}
 	}
 	gw1, gw2 := ip.FromIP(net.ParseIP("127.0.0.1")), ip.FromIP(net.ParseIP("127.0.0.2"))
 	subnet1 := ip.IP4Net{IP: ip.FromIP(net.ParseIP("192.168.0.0")), PrefixLen: 24}
