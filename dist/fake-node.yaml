@@ -3,9 +3,9 @@ kind: Node
 metadata:
   name: test
   annotations:
-    flannel.alpha.mcloud.io/backend-data: '{"VtepMAC":"96:59:b2:3f:04:ee"}'
-    flannel.alpha.mcloud.io/backend-type: vxlan
-    flannel.alpha.mcloud.io/kube-subnet-manager: "true"
-    flannel.alpha.mcloud.io/public-ip: 192.168.77.17
+    netmaster.alpha.mcloud.io/backend-data: '{"VtepMAC":"96:59:b2:3f:04:ee"}'
+    netmaster.alpha.mcloud.io/backend-type: vxlan
+    netmaster.alpha.mcloud.io/kube-subnet-manager: "true"
+    netmaster.alpha.mcloud.io/public-ip: 192.168.77.17
 spec:
   podCIDR: 10.244.7.0/24

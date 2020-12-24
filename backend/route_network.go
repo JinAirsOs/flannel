@@ -116,7 +116,6 @@ func (n *RouteNetwork) handleSubnetEvents(batch []subnet.Event) {
 				}
 			}
 
-
 		case subnet.EventRemoved:
 			log.Info("Subnet removed: ", evt.Lease.Subnet)
 

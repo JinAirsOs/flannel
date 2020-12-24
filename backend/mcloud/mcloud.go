@@ -10,9 +10,10 @@ import (
 	"net/http"
 	"time"
 
-	"sync"
 	"encoding/json"
+	"sync"
 
+	"github.com/golang/glog"
 	"github.com/coreos/flannel/backend"
 	"github.com/coreos/flannel/pkg/ip"
 	"github.com/coreos/flannel/subnet"
@@ -59,8 +60,8 @@ func (be *MCloudBackend) RegisterNetwork(ctx context.Context, wg *sync.WaitGroup
 		}
 		var res []*netlink.Route
 
-		for _,cidr := range cidrs {
-			_,ipNet,err := net.ParseCIDR(cidr)
+		for _, cidr := range cidrs {
+			_, ipNet, err := net.ParseCIDR(cidr)
 			if err != nil {
 				return nil
 			}
@@ -75,10 +76,10 @@ func (be *MCloudBackend) RegisterNetwork(ctx context.Context, wg *sync.WaitGroup
 	}
 
 	cfg := struct {
-		Token    string `json:"token"`
+		Token     string `json:"token"`
 		ServerURL string `json:"serverURL"`
-		Region string `json:"region"`
-		IDC string `json:"idc"`
+		Region    string `json:"region"`
+		IDC       string `json:"idc"`
 	}{}
 
 	if len(config.Backend) > 0 {
@@ -89,15 +90,16 @@ func (be *MCloudBackend) RegisterNetwork(ctx context.Context, wg *sync.WaitGroup
 		}
 	}
 
-	subnets,err := getSubnets(cfg.ServerURL,cfg.Token,"","", be.extIface.ExtAddr.String())
+	subnets, err := getSubnets(cfg.ServerURL, cfg.Token, "", "", be.extIface.ExtAddr.String())
 
 	if err != nil {
+		glog.Errorf("get subnets from ipamserver error %v", err)
 		return nil, fmt.Errorf("error got subnet from ipam server: %v", err)
 	}
 
 	var sns []string
 
-	for _, v:= range subnets {
+	for _, v := range subnets {
 		sns = append(sns, v.SubnetCIDR)
 	}
 
@@ -130,28 +132,28 @@ func (be *MCloudBackend) RegisterNetwork(ctx context.Context, wg *sync.WaitGroup
 const defaultTimeOut = 10 * time.Second
 
 type IpamHttpRequest struct {
-	HostIP       string `json:"hostIp"`
-	IDC           string `json:"idc"`
-	Region      string `json:"region"`
+	HostIP string `json:"hostIp"`
+	IDC    string `json:"idc"`
+	Region string `json:"region"`
 }
 
 type Response struct {
-	Code    int32                `json:"code"`
-	Message string               `json:"msg"`
+	Code    int32    `json:"code"`
+	Message string   `json:"msg"`
 	Data    []Subnet `json:"data"`
 }
 
 type Subnet struct {
-	 SubnetCIDR  string `json:"network"`
+	SubnetCIDR string `json:"network"`
 }
 
 func getSubnets(serverURL, token, region, idc, hostip string) ([]Subnet, error) {
 	client := &http.Client{}
 
 	ipamReq := IpamHttpRequest{
-		HostIP:       hostip,
-		IDC:           idc,
-		Region:      region,
+		HostIP: hostip,
+		IDC:    idc,
+		Region: region,
 	}
 
 	reqJson, err := json.Marshal(ipamReq)
@@ -187,7 +189,7 @@ func getSubnets(serverURL, token, region, idc, hostip string) ([]Subnet, error) 
 		return []Subnet{}, fmt.Errorf("unmarshal body failed:%+v, body: %+v\n", err, string(body))
 	}
 
-	if res.Data == nil || len(res.Data) == 0{
+	if res.Data == nil || len(res.Data) == 0 {
 		return []Subnet{}, fmt.Errorf("require %+v failed: %+v", ipamReq, string(body))
 	}
 

@@ -55,9 +55,9 @@ import (
 	_ "github.com/coreos/flannel/backend/hostgw"
 	_ "github.com/coreos/flannel/backend/ipip"
 	_ "github.com/coreos/flannel/backend/ipsec"
+	_ "github.com/coreos/flannel/backend/mcloud"
 	_ "github.com/coreos/flannel/backend/udp"
 	_ "github.com/coreos/flannel/backend/vxlan"
-	_ "github.com/coreos/flannel/backend/mcloud"
 	"github.com/coreos/go-systemd/daemon"
 )
 
@@ -106,7 +106,7 @@ var (
 	opts           CmdLineOpts
 	errInterrupted = errors.New("interrupted")
 	errCanceled    = errors.New("canceled")
-	netmasterFlags   = flag.NewFlagSet("flannel", flag.ExitOnError)
+	netmasterFlags = flag.NewFlagSet("flannel", flag.ExitOnError)
 )
 
 func init() {

@@ -23,20 +23,20 @@ func Test_newAnnotations(t *testing.T) {
 		hasError            bool
 	}{
 		{
-			prefix:              "flannel.alpha.mcloud.io",
-			expectedBackendType: "flannel.alpha.mcloud.io/backend-type",
+			prefix:              "netmaster.alpha.mcloud.io",
+			expectedBackendType: "netmaster.alpha.mcloud.io/backend-type",
 		},
 		{
-			prefix:              "flannel.alpha.mcloud.io/",
-			expectedBackendType: "flannel.alpha.mcloud.io/backend-type",
+			prefix:              "netmaster.alpha.mcloud.io/",
+			expectedBackendType: "netmaster.alpha.mcloud.io/backend-type",
 		},
 		{
-			prefix:              "flannel.alpha.mcloud.io/prefix",
-			expectedBackendType: "flannel.alpha.mcloud.io/prefix-backend-type",
+			prefix:              "netmaster.alpha.mcloud.io/prefix",
+			expectedBackendType: "netmaster.alpha.mcloud.io/prefix-backend-type",
 		},
 		{
-			prefix:              "flannel.alpha.mcloud.io/prefix-",
-			expectedBackendType: "flannel.alpha.mcloud.io/prefix-backend-type",
+			prefix:              "netmaster.alpha.mcloud.io/prefix-",
+			expectedBackendType: "netmaster.alpha.mcloud.io/prefix-backend-type",
 		},
 		{
 			prefix:              "org.com",

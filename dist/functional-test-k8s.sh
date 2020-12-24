@@ -131,7 +131,7 @@ test_ipip() {
 
 test_public-ip-overwrite(){
   docker exec flannel-e2e-k8s-apiserver kubectl annotate node flannel1 \
-    flannel.alpha.mcloud.io/public-ip-overwrite=172.18.0.2 >/dev/null 2>&1
+    netmaster.alpha.mcloud.io/public-ip-overwrite=172.18.0.2 >/dev/null 2>&1
   start_flannel vxlan
   assert_equals "172.18.0.2" \
     "$(docker exec flannel-e2e-k8s-apiserver kubectl get node/flannel1 -o \
@@ -139,7 +139,7 @@ test_public-ip-overwrite(){
     "Overwriting public IP via annotation does not work"
   # Remove annotation to not break all other tests
   docker exec flannel-e2e-k8s-apiserver kubectl annotate node flannel1 \
-    flannel.alpha.mcloud.io/public-ip-overwrite- >/dev/null 2>&1
+    netmaster.alpha.mcloud.io/public-ip-overwrite- >/dev/null 2>&1
 }
 
 pings() {

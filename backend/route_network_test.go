@@ -47,7 +47,7 @@ func TestRouteCache(t *testing.T) {
 		LinkIndex:   lo.Attrs().Index,
 	}
 	nw.GetRoute = func(lease *subnet.Lease) []*netlink.Route {
-		return []*netlink.Route{&netlink.Route{
+		return []*netlink.Route{{
 			Dst:       lease.Subnet.ToIPNet(),
 			Gw:        lease.Attrs.PublicIP.ToIP(),
 			LinkIndex: nw.LinkIndex,
