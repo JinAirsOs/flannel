@@ -117,7 +117,7 @@ data:
         "ipam": {
             "type": "hulk-ipam",
             "token": "e463937d15576af58ae7a7040807c018",
-            "serverURL": "http://10.72.220.155:30888"
+            "serverURL": "http://10.29.94.21:30888"
         }
     }
   net-conf.json: |
@@ -126,7 +126,7 @@ data:
       "Backend": {
         "Type": "mcloud",
         "token": "e463937d15576af58ae7a7040807c018",
-        "serverURL": "http://10.72.220.155:30888"
+        "serverURL": "http://10.29.94.21:30888"
       }
     }
 ---
@@ -165,7 +165,7 @@ spec:
       serviceAccountName: mcloudcni
       initContainers:
       - name: install-cni-config
-        image: mcloud-registry.tencentcloudcr.com/mcloud/mcloudcni-init:v0.2.0
+        image: 10.29.94.21:5000/mcloud/mcloudcni-init:v0.2.0
         command: [ "/bin/sh", "-c", "set -e -x; rm -rf /etc/cni/net.d/*.conf; cat /etc/kube-mcloudcni/cni-conf.json; cp -f /etc/kube-mcloudcni/cni-conf.json /etc/cni/net.d/10-netmaster.conf" ]
         volumeMounts:
         - name: cni
@@ -173,7 +173,7 @@ spec:
         - name: mcloudcni-cfg
           mountPath: /etc/kube-mcloudcni/
       - name: install-cni-bin
-        image: mcloud-registry.tencentcloudcr.com/mcloud/mcloudcni-init:v0.2.0
+        image: 10.29.94.21:5000/mcloud/mcloudcni-init:v0.2.0
         command: [ 'sh', '-c', 'set -e -x; mkdir -p /opt/cni/bin/tmp;cp /cni/* /opt/cni/bin/tmp;cp -f /opt/cni/bin/tmp/* /opt/cni/bin;rm -rf /opt/cni/bin/tmp' ]
         imagePullPolicy: Always
         volumeMounts:
@@ -181,7 +181,7 @@ spec:
           mountPath: /opt/cni/bin
       containers:
       - name: kube-mcloudcni
-        image: mcloud-registry.tencentcloudcr.com/mcloud/netmaster:v0.2.0
+        image: 10.29.94.21:5000/mcloud/netmaster:v0.2.0
         command:
         - /opt/bin/netmaster
         args:
