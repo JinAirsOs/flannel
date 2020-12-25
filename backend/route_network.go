@@ -24,6 +24,7 @@ import (
 
 	log "github.com/golang/glog"
 	"golang.org/x/net/context"
+	"github.com/coreos/flannel/pkg/ip"
 
 	"github.com/coreos/flannel/subnet"
 	"github.com/vishvananda/netlink"
@@ -54,6 +55,8 @@ func (n *RouteNetwork) Run(ctx context.Context) {
 	evts := make(chan []subnet.Event)
 	wg.Add(1)
 	go func() {
+		//kube subnet manager
+		//watch events from kubeSubnetManager
 		subnet.WatchLeases(ctx, n.SM, n.SubnetLease, evts)
 		wg.Done()
 	}()
@@ -199,6 +202,29 @@ func (n *RouteNetwork) checkSubnetExistInRoutes() {
 	} else {
 		log.Errorf("Error fetching route list. Will automatically retry: %v", err)
 	}
+}
+
+func (n *RouteNetwork) InitRoutes(cidrs []string) {
+	var evtBatch []subnet.Event
+
+	for _, cidr := range cidrs {
+		_, ipNet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			log.Errorf("error parse cidr %v %s", err, cidr)
+			continue
+		}
+		evt := subnet.Event{
+			Type: subnet.EventAdded,
+			Lease: subnet.Lease{
+				Subnet: ip.FromIPNet(ipNet),
+				Attrs: n.SubnetLease.Attrs,
+			},
+		}
+		evtBatch = append(evtBatch, evt)
+	}
+
+	n.handleSubnetEvents(evtBatch)
+
 }
 
 func routeEqual(x, y netlink.Route) bool {

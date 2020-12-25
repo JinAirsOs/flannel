@@ -246,6 +246,8 @@ func main() {
 	// blocking and returning only when cancel() is called.
 	ctx, cancel := context.WithCancel(context.Background())
 
+	//start node controller
+	//list watch node add/update/delete
 	sm, err := newSubnetManager(ctx)
 	if err != nil {
 		log.Error("Failed to create SubnetManager: ", err)

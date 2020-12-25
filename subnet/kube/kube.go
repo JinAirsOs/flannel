@@ -180,6 +180,7 @@ func newKubeSubnetManager(ctx context.Context, c clientset.Interface, sc *subnet
 
 func (ksm *kubeSubnetManager) handleAddLeaseEvent(et subnet.EventType, obj interface{}) {
 	n := obj.(*v1.Node)
+	glog.Infof("handleAddLeaseEvent node updated %s/%s", n.Namespace, n.Name)
 	if s, ok := n.Annotations[ksm.annotations.SubnetKubeManaged]; !ok || s != "true" {
 		return
 	}
@@ -189,12 +190,14 @@ func (ksm *kubeSubnetManager) handleAddLeaseEvent(et subnet.EventType, obj inter
 		glog.Infof("Error turning node %q to lease: %v", n.ObjectMeta.Name, err)
 		return
 	}
+	glog.Infof("new subnet.Event 0 is add 1 is removed, type: %s subnet:%s", et, l.Subnet)
 	ksm.events <- subnet.Event{et, l}
 }
 
 func (ksm *kubeSubnetManager) handleUpdateLeaseEvent(oldObj, newObj interface{}) {
 	o := oldObj.(*v1.Node)
 	n := newObj.(*v1.Node)
+	glog.Infof("handleUpdateLeaseEvent node updated %s/%s", n.Namespace, n.Name)
 	if s, ok := n.Annotations[ksm.annotations.SubnetKubeManaged]; !ok || s != "true" {
 		return
 	}
@@ -209,6 +212,7 @@ func (ksm *kubeSubnetManager) handleUpdateLeaseEvent(oldObj, newObj interface{})
 		glog.Infof("Error turning node %q to lease: %v", n.ObjectMeta.Name, err)
 		return
 	}
+	glog.Infof("new subnet.EventAdded %s", l.Subnet)
 	ksm.events <- subnet.Event{subnet.EventAdded, l}
 }
 
@@ -296,7 +300,7 @@ func (ksm *kubeSubnetManager) WatchLeases(ctx context.Context, cursor interface{
 }
 
 func (ksm *kubeSubnetManager) Run(ctx context.Context) {
-	glog.Infof("Starting kube subnet manager")
+	glog.Infof("Starting kube subnet manager node controller")
 	ksm.nodeController.Run(ctx.Done())
 }
 

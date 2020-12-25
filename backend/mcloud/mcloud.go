@@ -56,13 +56,16 @@ func (be *MCloudBackend) RegisterNetwork(ctx context.Context, wg *sync.WaitGroup
 		var cidrs []string
 		err := json.Unmarshal(lease.Attrs.BackendData, &cidrs)
 		if err != nil || len(cidrs) == 0 {
+			glog.Errorf("error decode annotation %s to cidrs %v ", lease.Attrs.BackendData, err)
 			return nil
 		}
+
 		var res []*netlink.Route
 
 		for _, cidr := range cidrs {
 			_, ipNet, err := net.ParseCIDR(cidr)
 			if err != nil {
+				glog.Errorf("error parse cidr %v %s", err, cidr)
 				return nil
 			}
 			res = append(res, &netlink.Route{
@@ -125,6 +128,8 @@ func (be *MCloudBackend) RegisterNetwork(ctx context.Context, wg *sync.WaitGroup
 	default:
 		return nil, fmt.Errorf("failed to acquire lease: %v", err)
 	}
+
+	n.InitRoutes(sns)
 
 	return n, nil
 }

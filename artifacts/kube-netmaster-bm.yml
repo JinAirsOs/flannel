@@ -183,9 +183,9 @@ spec:
       - name: kube-mcloudcni
         image: 10.29.94.21:5000/mcloud/netmaster:v0.2.0
         command:
-        - /opt/bin/netmaster
-        args:
-        - --kube-subnet-mgr
+        - /bin/sh
+        - -c
+        - /opt/bin/netmaster --kube-subnet-mgr=true --v=8
         resources:
           requests:
             cpu: "100m"
